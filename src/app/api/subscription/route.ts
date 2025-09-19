@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { User } from '@/lib/types';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-08-27.basil' });
 
@@ -16,7 +15,7 @@ export async function POST() {
     line_items: [{ price: 'price_yourstripepriceid', quantity: 1 }],
     success_url: `${process.env.NEXTAUTH_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXTAUTH_URL}/dashboard`,
-    customer_email: (session.user as User).email as string,
+    customer_email: session.user.email as string,
   });
 
   return NextResponse.json({ url: checkoutSession.url });
