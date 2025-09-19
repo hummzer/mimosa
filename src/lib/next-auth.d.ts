@@ -1,5 +1,4 @@
 import { DefaultSession, DefaultJWT } from 'next-auth';
-import { User } from './index';
 
 declare module 'next-auth' {
   interface Session {
