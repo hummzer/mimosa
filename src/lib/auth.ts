@@ -1,8 +1,9 @@
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { AuthOptions } from 'next-auth';
+import { User } from '@/lib/types';
 
 const prisma = new PrismaClient();
 
@@ -33,7 +34,7 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) session.user.id = token.id as string;
+      if (session.user) session.user = { ...session.user, id: token.id as string } as User;
       return session;
     },
   },

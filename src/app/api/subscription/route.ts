@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { User } from '@/lib/types';
 
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-08-27.basil' });
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -14,10 +13,10 @@ export async function POST() {
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
-    line_items: [{ price: 'price_yourstripepriceid', quantity: 1 }],  // From Stripe dashboard
+    line_items: [{ price: 'price_yourstripepriceid', quantity: 1 }],
     success_url: `${process.env.NEXTAUTH_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXTAUTH_URL}/dashboard`,
-    customer_email: session.user.email as string,
+    customer_email: (session.user as User).email as string,
   });
 
   return NextResponse.json({ url: checkoutSession.url });

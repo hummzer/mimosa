@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-08-27.basil' });
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature') as string;
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
+    console.error('Webhook error:', err);
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       });
     }
   } else if (event.type === 'invoice.payment_failed') {
-    // Handle failed payment, set status to 'inactive'
+    // Handle failed payment
   }
 
   return NextResponse.json({ received: true });
