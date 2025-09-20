@@ -2,24 +2,158 @@
 
 import { signIn } from 'next-auth/react';
 import React, { useState } from 'react';
+import Image from 'next/image';
 
-export default function SignIn() {
+const SignUpInPage = () => {
+  const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
-  const handleSignIn = () => signIn('credentials', { email, password, redirectTo: '/dashboard' });
-  const handleSignUp = async () => {
-    // Implement sign-up logic: POST to custom API route to hash password and create user
-    await fetch('/api/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
-    handleSignIn();
+  const handleAuthAction = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (isSignUp) {
+      if (!termsAgreed) {
+        alert('You must agree to the Terms & Privacy Policy.');
+        return;
+      }
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        alert('Account created successfully! Please sign in.');
+        setIsSignUp(false); // Switch to login after successful signup
+        setEmail('');
+        setPassword('');
+        setTermsAgreed(false);
+      } else {
+        const errorData = await response.json();
+        alert(`Sign up failed: ${errorData.message}`);
+      }
+    } else {
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (result?.error) {
+        alert('Sign in failed: Invalid credentials');
+      } else {
+        alert('Signed in successfully!');
+      }
+    }
   };
 
   return (
-    <div>
-      <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-      <button onClick={handleSignIn}>Sign In</button>
-      <button onClick={handleSignUp}>Sign Up</button>
+    <div className="relative min-h-screen text-white flex items-center justify-center p-4 font-light tracking-wide font-ios">
+      <Image
+        src="/city.jpg"
+        alt="A surreal cityscape with a television"
+        fill
+        style={{ objectFit: 'cover' }}
+        quality={100}
+        className="-z-10"
+      />
+      <div className="relative z-10 w-full max-w-6xl md:h-[80vh] flex flex-col md:flex-row rounded-2xl shadow-2xl overflow-hidden backdrop-filter backdrop-blur-md bg-opacity-30 border border-gray-700">
+        {/* Sign Up / Sign In Section */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black bg-opacity-70 overflow-y-auto space-y-8">
+          <div className="text-center w-full">
+            <h1 className="text-3xl font-light mb-2">
+              {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            </h1>
+            <p className="text-sm text-gray-400 max-w-xs mx-auto">
+              {isSignUp
+                ? 'Create your account to access the full Momo platform.'
+                : 'Welcome back! Please log in to continue.'}
+            </p>
+          </div>
+
+          <form onSubmit={handleAuthAction} className="w-full max-w-sm space-y-6">
+            <div>
+              <label htmlFor="email" className="block mb-2 text-sm text-gray-400">Email</label>
+              <input
+                type="email"
+                id="email"
+                className="w-full px-4 py-3 bg-gray-900 text-gray-200 placeholder-gray-500 border-b border-gray-700 focus:outline-none focus:border-white transition duration-300"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block mb-2 text-sm text-gray-400">Password</label>
+              <input
+                type="password"
+                id="password"
+                className="w-full px-4 py-3 bg-gray-900 text-gray-200 placeholder-gray-500 border-b border-gray-700 focus:outline-none focus:border-white transition duration-300"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {isSignUp && (
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  className="form-checkbox text-white bg-gray-900 border-gray-700 focus:ring-transparent focus:ring-offset-transparent rounded-sm"
+                  checked={termsAgreed}
+                  onChange={(e) => setTermsAgreed(e.target.checked)}
+                  required
+                />
+                <label htmlFor="terms" className="text-sm text-gray-400">
+                  I Agree To The <span className="underline hover:text-white cursor-pointer">Terms & Privacy Policy</span>
+                </label>
+              </div>
+            )}
+            <button
+              type="submit"
+              className="w-full py-3 text-base text-black bg-white hover:bg-gray-200 rounded-sm transition duration-300"
+            >
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+
+          <hr className="w-full max-w-sm border-gray-700 my-4" />
+
+          <div className="w-full text-center">
+            <span className="text-sm text-gray-400">
+              {isSignUp ? 'Already have an account?' : 'Don’t have an account?'}
+            </span>
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-white hover:underline ml-1 focus:outline-none"
+            >
+              {isSignUp ? 'Sign in here' : 'Sign up here'}
+            </button>
+          </div>
+        </div>
+        {/* Right Banner Section */}
+        <div className="hidden md:flex flex-1 items-center justify-center p-8 relative">
+          <Image
+            src="/regbanner.jpg"
+            alt="A surreal close-up with dynamic effects"
+            width={280}
+            height={280}
+            quality={100}
+            className="rounded-lg shadow-xl"
+            style={{ objectFit: 'contain' }}
+          />
+          <div className="absolute inset-0 bg-transparent backdrop-filter backdrop-blur-md bg-opacity-30"></div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default SignUpInPage;
