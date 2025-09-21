@@ -1,7 +1,10 @@
+// src/app/signin/page.tsx
+
 'use client';
 
-import { signIn } from 'next-auth/react';
-import React, { useState } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 const SignUpInPage = () => {
@@ -9,6 +12,15 @@ const SignUpInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const router = useRouter();
+  const { status } = useSession();
+
+  // Redirect authenticated users to the dashboard
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
 
   const handleAuthAction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,18 +32,23 @@ const SignUpInPage = () => {
       }
       const response = await fetch('/api/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
-        alert('Account created successfully! Please sign in.');
-        setIsSignUp(false); // Switch to login after successful signup
-        setEmail('');
-        setPassword('');
-        setTermsAgreed(false);
+        // Automatically sign in the user after successful signup
+        const result = await signIn('credentials', {
+          redirect: false,
+          email,
+          password,
+        });
+
+        if (result?.error) {
+          alert('Sign in failed after registration: Invalid credentials');
+        } else {
+          router.push('/dashboard'); // Redirect to dashboard on success
+        }
       } else {
         const errorData = await response.json();
         alert(`Sign up failed: ${errorData.message}`);
@@ -46,7 +63,7 @@ const SignUpInPage = () => {
       if (result?.error) {
         alert('Sign in failed: Invalid credentials');
       } else {
-        alert('Signed in successfully!');
+        router.push('/dashboard'); // Redirect to dashboard on success
       }
     }
   };
@@ -62,7 +79,6 @@ const SignUpInPage = () => {
         className="-z-10"
       />
       <div className="relative z-10 w-full max-w-6xl md:h-[80vh] flex flex-col md:flex-row rounded-2xl shadow-2xl overflow-hidden backdrop-filter backdrop-blur-md bg-opacity-30 border border-gray-700">
-        {/* Sign Up / Sign In Section */}
         <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black bg-opacity-70 overflow-y-auto space-y-8">
           <div className="text-center w-full">
             <h1 className="text-3xl font-light mb-2">
@@ -138,7 +154,6 @@ const SignUpInPage = () => {
             </button>
           </div>
         </div>
-        {/* Right Banner Section */}
         <div className="hidden md:flex flex-1 items-center justify-center p-8 relative">
           <Image
             src="/regbanner.jpg"
