@@ -1,3 +1,5 @@
+// src/app/api/webhook/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
@@ -17,18 +19,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const user = await prisma.user.findUnique({ where: { email: session.customer_email! } });
-    if (user) {
-      await prisma.subscription.upsert({
-        where: { userId: user.id },
-        update: { stripeId: session.subscription as string, status: 'active' },
-        create: { userId: user.id, stripeId: session.subscription as string, status: 'active' },
-      });
-    }
-  } else if (event.type === 'invoice.payment_failed') {
-    // Handle failed payment
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.metadata?.userId;
+      if (userId) {
+        await prisma.subscription.upsert({
+          where: { userId },
+          update: { stripeId: session.subscription as string, status: 'active' },
+          create: { userId, stripeId: session.subscription as string, status: 'active' },
+        });
+      }
+      break;
+
+    case 'customer.subscription.updated':
+      const subscription = event.data.object as Stripe.Subscription;
+      const user = await prisma.user.findFirst({ where: { subscription: { stripeId: subscription.id } } });
+      if (user) {
+        await prisma.subscription.update({
+          where: { userId: user.id },
+          data: { status: subscription.status },
+        });
+      }
+      break;
+
+    case 'invoice.payment_failed':
+      // Optionally handle failed payments, e.g., send an email to the user
+      break;
+
+    default:
+      console.log(`Unhandled event type ${event.type}`);
   }
 
   return NextResponse.json({ received: true });
