@@ -13,7 +13,7 @@ const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ subscriptionSta
   const handleSubscribe = async () => {
     try {
       // Use your actual Stripe price ID
-      const priceId = 'price_1PBhNdB0y41V4p3uIe1V9k6E';
+      const priceId = 'price_1S9vuRRwik33QJYMglNBblHi';
       const res = await axios.post('/api/subscription', { priceId });
       if (res.data.url) {
         window.location.href = res.data.url;
