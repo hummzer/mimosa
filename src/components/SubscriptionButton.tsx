@@ -1,44 +1,36 @@
 // src/components/SubscriptionButton.tsx
-
 'use client';
 
 import React from 'react';
-import axios from 'axios';
+import Link from 'next/link';
+import { DollarSign, CheckCircle } from 'lucide-react';
 
 interface SubscriptionButtonProps {
   subscriptionStatus: 'active' | 'inactive' | null;
 }
 
 const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ subscriptionStatus }) => {
-  const handleSubscribe = async () => {
-    try {
-      // Use your actual Stripe price ID
-      const priceId = 'price_1S9vuRRwik33QJYMglNBblHi';
-      const res = await axios.post('/api/subscription', { priceId });
-      if (res.data.url) {
-        window.location.href = res.data.url;
-      }
-    } catch (error) {
-      console.error('Subscription failed:', error);
-      alert('Subscription failed. Please try again.');
-    }
-  };
-
   if (subscriptionStatus === 'active') {
     return (
-      <button className="py-2 px-4 bg-gray-700 text-white rounded-md cursor-not-allowed">
-        Subscribed
-      </button>
+      <div className="flex items-center space-x-2 p-2 px-3 bg-green-900/30 border border-green-800 rounded-lg">
+        <CheckCircle className="h-4 w-4 text-green-400 font-thin" />
+        <span className="text-xs font-light text-green-300 tracking-wider">
+          Active Subscription
+        </span>
+      </div>
     );
   }
 
+  // If status is inactive or null (unauthenticated user on public page)
   return (
-    <button
-      onClick={handleSubscribe}
-      className="py-2 px-4 bg-white text-black font-semibold rounded-md hover:bg-gray-200 transition-colors"
-    >
-      Subscribe to Premium
-    </button>
+    <Link href="/pricing" legacyBehavior>
+      <a className="flex items-center space-x-2 p-2 px-3 bg-blue-600/50 border border-blue-600 hover:bg-blue-700/50 transition-colors rounded-lg">
+        <DollarSign className="h-4 w-4 text-white font-thin" />
+        <span className="text-xs font-light text-white tracking-wider">
+          View Pricing
+        </span>
+      </a>
+    </Link>
   );
 };
 
